@@ -43,9 +43,8 @@ static bool firstRun = true; // Flag for the first run
 int red_led = 14;
 int green_led = 12;
 int medication_dispense_button = 13;
-
-Stepper stepperMotor = Stepper(stepsPerRevolution, 26, 33, 25, 32);
 const int stepsPerRevolution = 2048;
+Stepper stepperMotor = Stepper(stepsPerRevolution, 26, 33, 25, 32);
 
 
 void streamCallback(StreamData data);
