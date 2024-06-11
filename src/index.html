@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Medication Tracker</title>
+  <style>
+    body {
+      background-color: #FAFAFA;
+      color: #212121;
+      font-family: 'Tahoma', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      border: 1px solid #E0E0E0;
+      display: inline-block;
+      background-color: #FFFFFF;
+      padding: 80px;
+      margin-top: 100px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+    }
+    h1 {
+      font-weight: bold;
+      font-size: 56px;
+      margin-bottom: 40px;
+    }
+    h3 {
+      font-weight: normal;
+      font-size: 36px;
+      margin: 20px 0;
+    }
+    .button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 40px 80px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 40px;
+      margin-top: 40px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .button:hover {
+      background-color: #45a049;
+    }
+    .button2 {
+      background-color: #2589b7;
+      border: none;
+      color: white;
+      padding: 20px 40px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 20px;
+      margin-top: 200px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .button2:hover {
+      background-color: #2c66a1;
+    }
+  </style>
+  <script>
+      document.addEventListener('DOMContentLoaded', (event) => {
+      var currentDate = new Date();
+      var optionsDate = { year: 'numeric', month: 'long', day: 'numeric' };
+      var optionsTime = { hour: 'numeric', minute: 'numeric', hour12: true };
+      
+      document.getElementById('current-date').textContent = currentDate.toLocaleDateString('en-US', optionsDate);
+      document.getElementById('current-time').textContent = currentDate.toLocaleTimeString('en-US', optionsTime);
+
+      document.getElementById('DISPENSE_BUTTON').addEventListener('click', dispenseButtonClicked);
+      document.getElementById('RESET_BUTTON').addEventListener('click', resetButtonClicked);
+
+      var Socket;
+      function init() {
+          Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+          Socket.onmessage = function(event) {
+              processCommand(event);
+          };
+      }
+      function processCommand(event) {
+        var obj = JSON.parse(event.data);
+        var type = obj.type;
+        if (type.localeCompare('medication_streak') == 0) {
+            var streak = parseInt(obj.value);
+            console.log(streak);
+            document.getElementById('STREAK_VALUE').textContent = streak;
+        } 
+        else if (type.localeCompare('missed_days') == 0) {
+            var missed_days = parseInt(obj.value);
+            console.log(missed_days);
+            document.getElementById('MISSED_DAYS_VALUE').textContent = missed_days;
+        } 
+        else if (type.localeCompare('longest_streak') == 0) {
+            var longest_streak = parseInt(obj.value);
+            console.log(longest_streak);
+            document.getElementById('LONGEST_STREAK_VALUE').textContent = longest_streak;
+        } 
+        else if (type.localeCompare('medication_taken') == 0){
+            var medication_taken = parseInt(obj.value);
+            console.log(medication_taken);
+            if (medication_taken == 1) {
+              document.getElementById('DISPENSE_BUTTON').style.backgroundColor = '#FF0000'; 
+              document.getElementById('DISPENSE_BUTTON').textContent = 'Dispensed';
+            } else {
+              document.getElementById('DISPENSE_BUTTON').style.backgroundColor = '#4CAF50'; 
+              document.getElementById('DISPENSE_BUTTON').textContent = 'Dispense Medication';
+            }
+        }
+      }
+
+      function dispenseButtonClicked()
+      {
+          console.log('dispense button clicked');
+          var msg = { type: 'dispense_button_clicked', value: 1};
+          Socket.send(JSON.stringify(msg));
+      }
+
+      function resetButtonClicked(){
+        console.log('reset button clicked');
+        var msg = {type : 'reset_button_clicked', value: 1};
+        Socket.send(JSON.stringify(msg));
+      }
+
+      window.onload = function(event) {
+        init();
+      }
+    });
+  </script>
+</head>
+<body>
+  <div style='margin-top:100px; margin-bottom: 100px;' class='container'>
+    <h1>Medication Tracker</h1>
+    <p style='font-size:40px; font-weight:700;' id='current-date'></p>
+    <p style='font-size:40px; font-weight:700;' id='current-time'></p>
+    <div>
+    </div>
+    <div>
+      <h3>Current Streak: <span id='STREAK_VALUE'>-</span></h3>
+      <h3>Longest Streak: <span id='LONGEST_STREAK_VALUE'>-</span></h3>
+      <h3>Number of Days Missed: <span id='MISSED_DAYS_VALUE'>-</span></h3>
+    </div>
+    <button class='button' id='DISPENSE_BUTTON'>-</button>
+    <br>
+    <button class='button2' id='RESET_BUTTON'>Reset Data</button>
+  </div>
+</body>
+</html>
