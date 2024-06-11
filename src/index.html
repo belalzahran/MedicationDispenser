@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Medication Tracker</title>
   <style>
     body {
@@ -65,74 +67,116 @@
       background-color: #2c66a1;
     }
   </style>
+
+  <!-- Firebase SDK -->
+  <script defer src="/__/firebase/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-database-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-firestore-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-functions-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-messaging-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-storage-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-analytics-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-remote-config-compat.js"></script>
+  <script defer src="/__/firebase/10.12.2/firebase-performance-compat.js"></script>
+  <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
   <script>
-      document.addEventListener('DOMContentLoaded', (event) => {
+    document.addEventListener('DOMContentLoaded', (event) => {
+      console.log("DOM fully loaded and parsed");
+
       var currentDate = new Date();
       var optionsDate = { year: 'numeric', month: 'long', day: 'numeric' };
       var optionsTime = { hour: 'numeric', minute: 'numeric', hour12: true };
-      
+
       document.getElementById('current-date').textContent = currentDate.toLocaleDateString('en-US', optionsDate);
       document.getElementById('current-time').textContent = currentDate.toLocaleTimeString('en-US', optionsTime);
 
-      document.getElementById('DISPENSE_BUTTON').addEventListener('click', dispenseButtonClicked);
-      document.getElementById('RESET_BUTTON').addEventListener('click', resetButtonClicked);
+      // Firebase setup
+      console.log("Initializing Firebase");
+      const firebaseConfig = {
+        apiKey: "AIzaSyDEtt3Hj85tqJRiJmRZxRF9fd_y9OTBohc",
+        authDomain: "medicinedispenser-c73da.firebaseapp.com",
+        databaseURL: "https://medicinedispenser-c73da-default-rtdb.firebaseio.com",
+        projectId: "medicinedispenser-c73da",
+        storageBucket: "medicinedispenser-c73da.appspot.com",
+        messagingSenderId: "809330138688",
+        appId: "1:809330138688:web:e737c25090331187ad89a5",
+        measurementId: "G-78EEM39E5F"
+      };
 
-      var Socket;
-      function init() {
-          Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
-          Socket.onmessage = function(event) {
-              processCommand(event);
-          };
-      }
-      function processCommand(event) {
-        var obj = JSON.parse(event.data);
-        var type = obj.type;
-        if (type.localeCompare('medication_streak') == 0) {
-            var streak = parseInt(obj.value);
-            console.log(streak);
-            document.getElementById('STREAK_VALUE').textContent = streak;
-        } 
-        else if (type.localeCompare('missed_days') == 0) {
-            var missed_days = parseInt(obj.value);
-            console.log(missed_days);
-            document.getElementById('MISSED_DAYS_VALUE').textContent = missed_days;
-        } 
-        else if (type.localeCompare('longest_streak') == 0) {
-            var longest_streak = parseInt(obj.value);
-            console.log(longest_streak);
-            document.getElementById('LONGEST_STREAK_VALUE').textContent = longest_streak;
-        } 
-        else if (type.localeCompare('medication_taken') == 0){
-            var medication_taken = parseInt(obj.value);
-            console.log(medication_taken);
-            if (medication_taken == 1) {
-              document.getElementById('DISPENSE_BUTTON').style.backgroundColor = '#FF0000'; 
-              document.getElementById('DISPENSE_BUTTON').textContent = 'Dispensed';
-            } else {
-              document.getElementById('DISPENSE_BUTTON').style.backgroundColor = '#4CAF50'; 
-              document.getElementById('DISPENSE_BUTTON').textContent = 'Dispense Medication';
-            }
+      firebase.initializeApp(firebaseConfig);
+
+      const dbRef = firebase.database().ref().child('medication').child('data');
+      const commandsRef = firebase.database().ref().child('medication').child('commands');
+
+      // Sync data with Firebase
+      dbRef.child('medication_streak').on('value', (snap) => {
+        const value = snap.val();
+        console.log('medication_streak:', value);
+        document.getElementById('STREAK_VALUE').innerText = value !== null ? value : '-';
+      });
+
+      dbRef.child('missed_days').on('value', (snap) => {
+        const value = snap.val();
+        console.log('missed_days:', value);
+        document.getElementById('MISSED_DAYS_VALUE').innerText = value !== null ? value : '-';
+      });
+
+      dbRef.child('longest_streak').on('value', (snap) => {
+        const value = snap.val();
+        console.log('longest_streak:', value);
+        document.getElementById('LONGEST_STREAK_VALUE').innerText = value !== null ? value : '-';
+      });
+
+
+      dbRef.child('medication_taken').on('value', (snap) => {
+        const value = snap.val();
+        console.log('medication_taken:', value);
+        const dispenseButton = document.getElementById('DISPENSE_BUTTON');
+        if (value === "1") {
+          dispenseButton.style.backgroundColor = '#FF0000';
+          dispenseButton.textContent = 'Dispensed';
+        } else {
+          dispenseButton.style.backgroundColor = '#4CAF50';
+          dispenseButton.textContent = 'Dispense Medication';
         }
-      }
+      });
 
-      function dispenseButtonClicked()
-      {
-          console.log('dispense button clicked');
-          var msg = { type: 'dispense_button_clicked', value: 1};
-          Socket.send(JSON.stringify(msg));
-      }
 
-      function resetButtonClicked(){
+
+
+
+
+
+      // Button event listeners for Firebase
+      document.getElementById('DISPENSE_BUTTON').addEventListener('click', () => {
+        console.log('dispense button clicked');
+        commandsRef.push({ type: 'dispense', value: '1' }).then(() => {
+          console.log("Dispense command pushed to Firebase");
+        }).catch((error) => {
+          console.error('Error writing to Firebase:', error);
+        });
+      });
+
+      document.getElementById('RESET_BUTTON').addEventListener('click', () => {
         console.log('reset button clicked');
-        var msg = {type : 'reset_button_clicked', value: 1};
-        Socket.send(JSON.stringify(msg));
-      }
+        commandsRef.push({ type: 'reset', value: '1' }).then(() => {
+          console.log("Reset command pushed to Firebase");
+        }).catch((error) => {
+          console.error('Error writing to Firebase:', error);
+        });
+      });
 
-      window.onload = function(event) {
-        init();
-      }
+
+
+
     });
+
+
   </script>
+
+
 </head>
 <body>
   <div style='margin-top:100px; margin-bottom: 100px;' class='container'>
@@ -144,9 +188,9 @@
     <div>
       <h3>Current Streak: <span id='STREAK_VALUE'>-</span></h3>
       <h3>Longest Streak: <span id='LONGEST_STREAK_VALUE'>-</span></h3>
-      <h3>Number of Days Missed: <span id='MISSED_DAYS_VALUE'>-</span></h3>
+      <h3>Days Missed: <span id='MISSED_DAYS_VALUE'>-</span></h3>
     </div>
-    <button class='button' id='DISPENSE_BUTTON'>-</button>
+    <button class='button' id='DISPENSE_BUTTON'>Dispense Medication</button>
     <br>
     <button class='button2' id='RESET_BUTTON'>Reset Data</button>
   </div>
