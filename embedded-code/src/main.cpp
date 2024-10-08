@@ -95,9 +95,9 @@ void loop()
     }
 
     // Choose your interval: hour or minute
-    // bool timeChanged = (timeinfo.tm_mday != lastTime.tm_mday);
+    bool timeChanged = (timeinfo.tm_mday != lastTime.tm_mday);
     // bool timeChanged =  (timeinfo.tm_hour != lastTime.tm_hour);
-    bool timeChanged = timeinfo.tm_min != lastTime.tm_min;
+    // bool timeChanged = timeinfo.tm_min != lastTime.tm_min;
 
     if (timeChanged) 
     {
