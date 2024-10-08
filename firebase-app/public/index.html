@@ -86,7 +86,7 @@
 </head>
 <body>
   <div style='margin-top:100px; margin-bottom: 100px;' class='container'>
-    <h1>Medication TRACKER</h1>
+    <h1>Medication Tracker</h1>
     <p style='font-size:40px; font-weight:700;' id='current-date'></p>
     <p style='font-size:40px; font-weight:700;' id='current-time'></p>
     <div>
@@ -201,7 +201,7 @@
         dateElement.textContent = currentDate.toLocaleDateString('en-US', optionsDate);
         timeElement.textContent = currentDate.toLocaleTimeString('en-US', optionsTime);
 
-        console.log('Time updated:', timeElement.textContent);
+        //console.log('Time updated:', timeElement.textContent);
     } else {
         console.error('Time elements not found in DOM.');
     }
